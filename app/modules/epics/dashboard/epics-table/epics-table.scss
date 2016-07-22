@@ -53,9 +53,9 @@
 }
 
 .epics-table-options-wrapper {
+    bottom: 1rem;
     position: absolute;
     right: .5rem;
-    top: .5rem;
 }
 
 .epics-table-option-button {
@@ -78,6 +78,7 @@
     right: 0;
     top: 1.3rem;
     width: 250px;
+    z-index: 99;
     .fieldset {
         @include font-size(small);
         border-bottom: 1px solid $whitish;
