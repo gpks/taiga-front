@@ -21,16 +21,26 @@ module = angular.module("taigaEpics")
 
 class EpicRowController
     @.$inject = [
+        "tgResources"
     ]
 
-    constructor: () ->
-        console.log @.epic.toJS()
-        console.log @.project
+    constructor: (@rs) ->
         @._calculateProgressBar()
 
     _calculateProgressBar: () ->
         totalUs = @.epic.getIn(['user_stories_counts', 'closed'])
         totalUsCompleted = @.epic.getIn(['user_stories_counts', 'opened'])
-        @.percentage = (totalUs * 100) / totalUsCompleted
+        @.percentage = totalUs * 100 / totalUsCompleted
+
+    updateEpicStatus: (status) ->
+        epicStatus = @.epic.get('status')
+        epicStatus = status
+
+        onSuccess = =>
+            console.log "success"
+        onError = =>
+            console.log "error"
+
+        return @rs.epics.updateStatus(@.epic).then(onSuccess, onError)
 
 module.controller("EpicRowCtrl", EpicRowController)

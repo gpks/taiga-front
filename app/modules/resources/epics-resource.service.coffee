@@ -28,6 +28,9 @@ Resource = (urlsService, http) ->
         return http.get(url, params, httpOptions).then (result) ->
             return Immutable.fromJS(result.data)
 
+    service.updateStatus = (params) ->
+        console.log "service"
+
     return () ->
         return {"epics": service}
 

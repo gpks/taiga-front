@@ -1,7 +1,9 @@
 .epic-row(
     ng-class="{'is-blocked':  vm.epic.get('is_blocked'), 'is-closed': vm.epic.get('is_closed')}"
 )
-    tg-svg(svg-icon="icon-drag")
+    tg-svg(
+        svg-icon="icon-drag"
+    )
     .vote(
         ng-if="vm.column.votes"
         ng-class="{'is-voter': vm.epic.get('is_voter')}"
@@ -46,7 +48,7 @@
         ul.epic-statuses(ng-show="displayStatusList")
             li(
                 ng-repeat="status in vm.project.epic_statuses | orderBy:'order'"
-                ng-click="vm.updateEpicStatus(status.name)"
+                ng-click="vm.updateEpicStatus(status.id)"
             ) {{status.name}}
     .progress(ng-if="vm.column.progress")
         .progress-bar
