@@ -394,12 +394,13 @@ class TaskboardController extends mixOf(taiga.Controller, taiga.PageMixin, taiga
                 @taskboardTasksService.replace(task)
 
     prepareBulkUpdateData: (uses) ->
-         return _.map(uses, (x) -> {"task_id": x.id, "order": x["taskboard_order"]})
+         return _.map uses, (x) ->
+             return {"task_id": x.id, "order": x["taskboard_order"]}
 
     taskMove: (ctx, task, oldStatusId, usId, statusId, order) ->
         task = @taskboardTasksService.getTaskModel(task.get('id'))
 
-        itemsToSave = @taskboardTasksService.move(task.id, usId, statusId, order)
+        moveUpdateData = @taskboardTasksService.move(task.id, usId, statusId, order)
 
         params = {
             status__is_archived: false,
@@ -407,20 +408,14 @@ class TaskboardController extends mixOf(taiga.Controller, taiga.PageMixin, taiga
             include_tasks: true
         }
 
-        # Persist the task
-        promise = @repo.save(task, true, params)
+        # buldUpdateData = @.prepareBulkUpdateData([task])
 
-        # Rehash userstories order field
-        # and persist in bulk all changes.
-        promise = promise.then =>
+        promise = @repo.save(task, true, params).then () =>
             @.loadSprintStats()
-
-            itemsToSave = _.reject(itemsToSave, {"id": task.id})
-            data = @.prepareBulkUpdateData(itemsToSave)
-
-            return @rs.tasks.bulkUpdateTaskTaskboardOrder(@scope.project.id, data)
-
-            @.refreshTasksOrder(tasks)
+            # promise = @rs.tasks.bulkUpdateTaskTaskboardOrder(@scope.project.id, [moveUpdateData])
+            # promise = promise.then (orders) =>
+            #     #@taskboardTasksService.assignOrders(orders.data)
+            #     @.loadSprintStats()
 
     ## Template actions
     addNewTask: (type, us) ->

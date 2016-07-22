@@ -47,10 +47,22 @@ class TaskboardTasksService extends taiga.Service
 
     set: (tasks) ->
         @.tasksRaw = tasks
+        @.refreshRawOrder()
         @.refresh()
 
     setUserstories: (userstories) ->
         @.userstories = userstories
+
+    refreshRawOrder: () ->
+        @.order = {}
+
+        @.order[task.id] = task.taskboard_order for task in @.tasksRaw
+
+    assignOrders: (order) ->
+        order = _.invert(order)
+        @.order = _.assign(@.order, order)
+
+        @.refresh()
 
     getTask: (id) ->
         findedTask = null
@@ -94,39 +106,85 @@ class TaskboardTasksService extends taiga.Service
         taskByUsStatus = _.filter @.tasksRaw, (task) =>
             return task.status == statusId && task.user_story == usId
 
-        taskByUsStatus = _.sortBy(taskByUsStatus, "taskboard_order")
+        taskByUsStatus = _.sortBy taskByUsStatus, (it) => @.order[it.id]
+
+        # if task.status != statusId || task.user_story != usId
+        #     @.reorder(taskByUsStatus)
+        #     # taskByUsStatus.splice(index, 0, taskByUsStatus.splice(task.taskboard_order, 1)[0])
+
+        #     # if index > 0 && taskByUsStatus[index - 1]
+        #     #     task_order = taskByUsStatus[index - 1].taskboard_order + 1
+        #     # else if taskByUsStatus[index - 1]
+        #     #     task_order = taskByUsStatus[index].taskboard_order
+
+        #     task.status = statusId
+        #     task.user_story = usId
+
+        #     # task.taskboard_order = task_order
+
+        #     # taskByUsStatus.push(task)
+
+        #     @.refresh()
+
+        #     return task
+
+        console.log "id", task.id
+        console.log "ref", task.ref
+        console.log "index", index
+        console.log "inicio", @.order[task.id]
 
         if task.status != statusId || task.user_story != usId
-            taskByUsStatus.splice(index, 0, task)
-
-            task.status = statusId
-            task.user_story = usId
+            previous = taskByUsStatus[index - 1]
         else
-            oldIndex = _.findIndex taskByUsStatus, (it) ->
-                return it.id == task.id
+            oldIndex = _.findIndex taskByUsStatus, (it) -> it.id == task.id
 
-            taskByUsStatus.splice(oldIndex, 1)
-            taskByUsStatus.splice(index, 0, task)
+            if index > oldIndex
+                previous = taskByUsStatus[index]
+            else
+                previous = taskByUsStatus[index - 1]
 
-        modified = @.resortTasks(taskByUsStatus)
+        console.log previous
+
+        if index == 0
+            @.order[task.id] = 0
+        else if previous
+            console.log "id previous", previous.id
+            console.log "ref previous", previous.ref
+            console.log "ref previous order", @.order[previous.id]
+            @.order[task.id] = @.order[previous.id] + 1
+
+        for it in taskByUsStatus
+            if it.id != task.id && @.order[it.id] >= @.order[task.id]
+                console.log "increase", it.id, it.ref, @.order[it.id] + 1
+                @.order[it.id] += 1
+
+        task.status = statusId
+        task.user_story = usId
+        task.taskboard_order = @.order[task.id]
+
+        console.log "fin", @.order[task.id]
+        console.log @.order
 
         @.refresh()
 
-        return modified
+        return {"task_id": task.id, "order": @.order[task.id]}
 
-    resortTasks: (tasks) ->
-        items = []
-        for item, index in tasks
-            item.taskboard_order = index
-            if item.isModified()
-                items.push(item)
+    # reorder: (tasks) ->
+    #     console.log "???????????"
+    #     console.log tasks
+    #     for item, index in tasks
+    #         item.taskboard_order = index
 
-        return items
+    #     console.log "1-----"
+    #     console.log tasks[0].ref, tasks[0].taskboard_order
+    #     console.log tasks[1].ref, tasks[1].taskboard_order
+
+    #     return tasks
 
     refresh: ->
-        tasks = @.tasksRaw
+        @.tasksRaw = _.sortBy @.tasksRaw, (it) => @.order[it.id]
 
-        tasks = _.sortBy(tasks, 'taskboard_order')
+        tasks = @.tasksRaw
         taskStatusList = _.sortBy(@.project.task_statuses, "order")
 
         usTasks = {}
