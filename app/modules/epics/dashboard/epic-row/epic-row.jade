@@ -1,4 +1,6 @@
-.epic-row
+.epic-row(
+    ng-class="{'is-blocked':  vm.epic.get('is_blocked'), 'is-closed': vm.epic.get('is_closed')}"
+)
     .vote(
         ng-if="vm.column.votes"
         ng-class="{'is-voter': vm.epic.get('is_voter')}"
@@ -6,7 +8,11 @@
         tg-svg(svg-icon='icon-upvote')
         span {{::vm.epic.get('total_voters')}}
         
-    .name(ng-if="vm.column.name") {{::vm.epic.get('subject')}}
+    .name(ng-if="vm.column.name") 
+        a(
+            tg-nav="project-epic-detail:project=vm.project.get('slug')"
+            ng-attr-title="{{::vm.epic.get('subject')}}"
+        ) {{::vm.epic.get('subject')}}
     
     .project(ng-if="vm.column.project") {{::vm.epic.get('project')}}
     .sprint(
@@ -26,9 +32,16 @@
     .status(
         ng-if="vm.column.status"
         ng-style="{'color': vm.epic.getIn(['status_extra_info', 'color'])}"
-    ) 
-        span {{::vm.epic.getIn(['status_extra_info', 'name'])}}
-        tg-svg(svg-icon="icon-arrow-down")        
+        ng-mouseleave="displayStatusList = false"
+    )
+        button(
+            ng-click="displayStatusList = true"
+        )
+            span {{::vm.epic.getIn(['status_extra_info', 'name'])}}
+            tg-svg(svg-icon="icon-arrow-down")        
     .progress(ng-if="vm.column.progress")
         .progress-bar
-        .progress-status
+        .progress-status(
+            ng-if="::vm.percentage"
+            ng-attr-width="::vm.percentage"
+        )
